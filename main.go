@@ -12,10 +12,11 @@ func handleBgpOpenMessage(header *BgpMessageHeader, buf []byte) error {
 	var asNumber uint16 = binary.BigEndian.Uint16(buf[1:3])
 	var holdTime uint16 = binary.BigEndian.Uint16(buf[3:5])
 	var bgpIdentifier uint32 = binary.BigEndian.Uint32(buf[5:9])
-	var optionalParametersLength uint8 = buf[10]
+	var optionalParametersLength uint8 = buf[9]
 	var optionalParameters []*BgpOptionalParameter
-	if optionalParametersLength < 1 {
-		optionalParameters, _ = NewBgpOptionalParameters(buf[11 : 11+optionalParametersLength])
+	if optionalParametersLength > 0 {
+		optionalParameters, _ = NewBgpOptionalParameters(optionalParametersLength, buf[10:])
+		log.Printf("INFO parsing optional parameters %v", optionalParameters)
 	}
 
 	message, err := NewBgpOpenMessage(header, bgpVersion, asNumber, holdTime, bgpIdentifier, optionalParametersLength, optionalParameters)
@@ -41,7 +42,7 @@ func handleSession(conn net.Conn) error {
 
 		var messageLength uint16 = binary.BigEndian.Uint16(buf[16:18])
 		messageType := BgpMessageType(buf[18])
-		log.Printf("BGP header message length %d message type %v", messageLength, messageType)
+		log.Printf("INFO BGP header message length %d message type %v", messageLength, messageType)
 
 		header, err := NewBgpMessageHeader(messageLength, messageType)
 		if err != nil {

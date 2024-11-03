@@ -49,14 +49,19 @@ type BgpOptionalParameter struct {
 	parameterValue  []byte
 }
 
-func NewBgpOptionalParameters(buf []byte) ([]*BgpOptionalParameter, error) {
+func NewBgpOptionalParameters(optionalParametersLength uint8, buf []byte) ([]*BgpOptionalParameter, error) {
 	var optionalParameters []*BgpOptionalParameter
 	for i := range buf {
 		t := buf[0]
 		l := buf[1]
 		v := buf[2 : 2+l]
 		optionalParameters = append(optionalParameters, &BgpOptionalParameter{t, l, v})
+		log.Printf("INFO NewBgpOptionalParameters BGP optional parameters %v", optionalParameters)
 		buf = buf[i+2+int(l):]
+		optionalParametersLength -= 1
+		if optionalParametersLength < 1 {
+			break
+		}
 	}
 	return optionalParameters, nil
 }
