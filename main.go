@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/binary"
+	"errors"
 	"log"
 	"net"
 )
@@ -16,6 +17,7 @@ func handleBgpOpenMessage(header *BgpMessageHeader, buf []byte) error {
 	if optionalParametersLength < 1 {
 		optionalParameters, _ = NewBgpOptionalParameters(buf[11 : 11+optionalParametersLength])
 	}
+
 	message, err := NewBgpOpenMessage(header, bgpVersion, asNumber, holdTime, bgpIdentifier, optionalParametersLength, optionalParameters)
 	if err != nil {
 		log.Printf("ERROR failed to parse BGP Open message %v", err)
@@ -48,8 +50,19 @@ func handleSession(conn net.Conn) error {
 		}
 
 		log.Printf("INFO successfully created new BGP message header %v", header)
-		if messageType == OPEN {
+		switch messageType {
+		case OPEN:
 			return handleBgpOpenMessage(header, buf[19:])
+		case UPDATE:
+			return nil
+		case KEEPALIVE:
+			return nil
+		case NOTIFICATION:
+			return nil
+		default:
+			err := errors.New("invalid message type found in BGP header")
+			log.Printf("ERROR %v", err)
+			return err
 		}
 	}
 }
