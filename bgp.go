@@ -51,10 +51,6 @@ type BgpOptionalParameter struct {
 
 func NewBgpOptionalParameters(buf []byte) ([]*BgpOptionalParameter, error) {
 	var optionalParameters []*BgpOptionalParameter
-	if len(buf) < 2 {
-		return append(optionalParameters, &BgpOptionalParameter{0, 0, nil}), nil
-	}
-
 	for i := range buf {
 		t := buf[0]
 		l := buf[1]

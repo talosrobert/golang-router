@@ -13,13 +13,8 @@ func handleBgpOpenMessage(header *BgpMessageHeader, buf []byte) error {
 	var bgpIdentifier uint32 = binary.BigEndian.Uint32(buf[5:9])
 	var optionalParametersLength uint8 = buf[10]
 	var optionalParameters []*BgpOptionalParameter
-	if optionalParametersLength > 0 {
-		var err error
-		optionalParameters, err = NewBgpOptionalParameters(buf[11 : 11+optionalParametersLength])
-		if err != nil {
-			log.Printf("ERROR failed to parse BGP optional parameters %v", err)
-			return err
-		}
+	if optionalParametersLength < 1 {
+		optionalParameters, _ = NewBgpOptionalParameters(buf[11 : 11+optionalParametersLength])
 	}
 	message, err := NewBgpOpenMessage(header, bgpVersion, asNumber, holdTime, bgpIdentifier, optionalParametersLength, optionalParameters)
 	if err != nil {
@@ -34,9 +29,8 @@ func handleBgpOpenMessage(header *BgpMessageHeader, buf []byte) error {
 func handleSession(conn net.Conn) error {
 	defer conn.Close()
 
-	buf := make([]byte, 4096)
-
 	for {
+		buf := make([]byte, 4096)
 		_, err := conn.Read(buf)
 		if err != nil {
 			log.Printf("ERROR failed to read TCP connection data into buffer %v", err)
@@ -55,7 +49,7 @@ func handleSession(conn net.Conn) error {
 
 		log.Printf("INFO successfully created new BGP message header %v", header)
 		if messageType == OPEN {
-			handleBgpOpenMessage(header, buf[19:])
+			return handleBgpOpenMessage(header, buf[19:])
 		}
 	}
 }
