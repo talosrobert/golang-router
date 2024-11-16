@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"log"
+	"net"
 )
 
 type BgpMessageType uint8
@@ -86,4 +87,24 @@ func NewBgpOpenMessage(messageHeader *BgpMessageHeader, bgpVersion uint8, asNumb
 		optionalParamsLength: optionalParamsLength,
 		optionalParameters:   optionalParameters,
 	}, nil
+}
+
+// TODO these two struct could be represented by a single one, not sure about their methods yet.
+type NetworkLayerReachabilityInformation struct {
+	prefixLength uint8
+	prefix       net.IP
+}
+
+type WithdrawnRoute struct {
+	prefixLength uint8
+	prefix       net.IP
+}
+
+type BgpUpdateMessage struct {
+	messageHeader                       *BgpMessageHeader
+	withdrawnRoutesLength               uint16 // A value of 0 indicates that no routes are being withdrawn from service, and that the WITHDRAWN ROUTES field is not present in this UPDATE message.
+	withdrawnRoutes                     []*WithdrawnRoute
+	totalPathAttributesLength           uint16 // A value of 0 indicates that neither the Network Layer Reachability Information field nor the Path Attribute field is present in this UPDATE message.
+	pathAttributes                      []byte
+	networkLayerReachabilityInformation []*NetworkLayerReachabilityInformation
 }
